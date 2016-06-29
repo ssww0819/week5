@@ -1,0 +1,9 @@
+<html>
+  <body>
+    <form action = "/">
+      word1 : <input word1 = "word1" type = "text" /><br />
+      word2 : <input word2 = "word2" type = "text" /><br />
+      <button type = "submit">SUBMIT</button>
+    </form>
+  </body>
+</html>
