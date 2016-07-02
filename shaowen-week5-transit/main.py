@@ -21,7 +21,6 @@ import jinja2
 import linecache
 
 import json
-import csv
 from collections import defaultdict
 
 MAX_DISTANCE = 100
@@ -49,46 +48,46 @@ def multi_dimension_dict(dimension):
     
 class Result(webapp2.RequestHandler):
     def get(self):
-        self.response.write("こんにちは\n")
-        f = open('stations.tsv', 'r')
-        reader = csv.reader(f, delimiter='\t')
+        self.response.write("route : \n")
+        f1 = open('net.json', 'r')
+        reader1 = json.load(f1)
         net = multi_dimension_dict(2)
         notvisit = {}
         distance = {}
-        for line in reader:
-            i = 1
-            while i+1 < len(line):
-                station1 = line[i] 
-                station2 = line[i+1]
-                net[station1][station2] = 1
-                net[station2][station1] = 1
-                if notvisit.has_key(station1) == False:
-                    notvisit[station1] = True
-                    distance[station1] = MAX_DISTANCE
-                i = i + 1
-            if notvisit.has_key(station2) == False:
-                notvisit[station2] = True
-                distance[station2] = MAX_DISTANCE
 
-        #self.response.write(str(distance).decode("string-escape"))
-        self.response.write(str(notvisit).decode("string-escape"))
+        for j in range(0, len(reader1)):
+            dict_line = reader1[j]
+            if dict_line.has_key('Stations'):
+                i = 0
+                while i +1 < len(dict_line['Stations']):
+                    station1 = dict_line['Stations'][i] 
+                    station2 = dict_line['Stations'][i+1]
+                    net[station1][station2] = 1
+                    net[station2][station1] = 1
+                    if notvisit.has_key(station1) == False:
+                        notvisit[station1] = True
+                        distance[station1] = MAX_DISTANCE
+                    if notvisit.has_key(station2) == False:
+                        notvisit[station2] = True
+                        distance[station2] = MAX_DISTANCE
+                    i += 1
 
-        
         prev = {} #the node before
-        start = self.request.get("station1")
+        start = self.request.get("station2")
         prev.update({start : start})
-        self.response.write(str(prev).decode("unicode-escape"))
-        distance[self.request.get("station1")] = 0
-        u = self.request.get("station1")
+        distance[start] = 0
+        u = []
+        loop = 0
         while True:
             flag = 0
             mini = MAX_DISTANCE
             for k in notvisit.keys():
-                if notvisit[k] == True:
+                if notvisit[k]== True:
                     if distance[k] < mini:
                         mini = distance[k]
                         u = k
             notvisit[u] = False  #visit u (with minimum distance from start)
+            #self.response.write(u)
             for k in notvisit.keys():
                 if notvisit[k] == True:
                     if net[u][k] == 1:
@@ -100,20 +99,20 @@ class Result(webapp2.RequestHandler):
             for k in notvisit.keys():
                 if notvisit[k] == True:
                     flag = 1
+
+            loop += 1
             if flag == 0: break  #if all nodes in notvisit == False, finish the loop
-
-        self.response.write(self.request.get("station1"))       
-        v = self.request.get("station2")
-
-        
-        while v != self.request.get("station1"):
+              
+        v = self.request.get("station1")
+        self.response.write(v)
+        self.response.write('\n')
+        while v != start:
             self.response.write(prev[v])
+            self.response.write('\n')
+            #print " <- %d" % prev[v]
             v = prev[v]
-        self.response.write('Distance : %d' % distance[self.request.get("station2")])
-
-                    
         
-            
+           
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
     ('/result', Result),
